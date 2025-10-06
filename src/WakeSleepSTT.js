@@ -1,19 +1,29 @@
+import { createClient, LiveTranscriptionEvents } from '@deepgram/sdk';
+import mic from 'mic';
+
 class WakeSleepSTT {
   constructor(options = {}) {
     this.config = {
       wakeWord: (options.wakeWord || 'hi').toLowerCase(),
       sleepWord: (options.sleepWord || 'bye').toLowerCase(),
+      apiKey: options.apiKey,
       language: options.language || 'en-US',
-      continuous: options.continuous !== undefined ? options.continuous : true,
-      interimResults: options.interimResults !== undefined ? options.interimResults : true,
+      sampleRate: options.sampleRate || 16000,
+      channels: options.channels || 1,
       debug: options.debug || false,
     };
 
+    if (!this.config.apiKey) {
+      throw new Error('Deepgram API key is required. Get yours at https://console.deepgram.com/');
+    }
+
     this.isListeningForWakeWord = false;
     this.isTranscribing = false;
-    this.recognition = null;
+    this.deepgram = null;
+    this.connection = null;
+    this.microphone = null;
+    this.micStream = null;
     this.isInitialized = false;
-    this.hasPermission = false;
     this.isStopping = false;
     this.eventListeners = {};
 
@@ -22,39 +32,27 @@ class WakeSleepSTT {
 
   async initialize() {
     try {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      this.deepgram = createClient(this.config.apiKey);
 
-      if (!SpeechRecognition) {
-        throw new Error('Web Speech API not supported in this browser. Please use Chrome, Edge, or Safari.');
-      }
+      this.connection = this.deepgram.listen.live({
+        language: this.config.language,
+        punctuate: true,
+        smart_format: true,
+        model: 'nova-2',
+        interim_results: true,
+      });
 
-      try {
-        this.log('Requesting microphone permission...');
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        stream.getTracks().forEach(track => track.stop());
+      this.setupDeepgramHandlers();
 
-        this.hasPermission = true;
-        this.log('Microphone permission granted');
-        this.emit('permissionGranted');
-      } catch (permError) {
-        this.hasPermission = false;
-        const errorMessage = permError.name === 'NotAllowedError' || permError.name === 'PermissionDeniedError'
-          ? 'Microphone permission denied. Please allow microphone access in your browser settings.'
-          : 'Microphone not available. Please check your device settings.';
-
-        this.log('Permission error:', errorMessage);
-        throw new Error(errorMessage);
-      }
-
-      this.recognition = new SpeechRecognition();
-      this.recognition.continuous = this.config.continuous;
-      this.recognition.interimResults = this.config.interimResults;
-      this.recognition.lang = this.config.language;
-
-      this.setupRecognitionHandlers();
+      this.microphone = mic({
+        rate: this.config.sampleRate,
+        channels: this.config.channels,
+        debug: false,
+        exitOnSilence: 0,
+      });
 
       this.isInitialized = true;
-      this.log('Speech Recognition initialized successfully');
+      this.log('Deepgram connection initialized successfully');
       this.emit('initialized');
 
       return true;
@@ -65,79 +63,45 @@ class WakeSleepSTT {
     }
   }
 
-  setupRecognitionHandlers() {
-    this.recognition.onresult = (event) => {
-      const lastResultIndex = event.resultIndex;
-      const result = event.results[lastResultIndex];
+  setupDeepgramHandlers() {
+    this.connection.on(LiveTranscriptionEvents.Open, () => {
+      this.log('Deepgram connection opened');
+      this.emit('connected');
+    });
 
-      const transcript = result[0].transcript.trim();
-      const isFinal = result.isFinal;
-      const confidence = result[0].confidence;
+    this.connection.on(LiveTranscriptionEvents.Close, () => {
+      this.log('Deepgram connection closed');
+      this.emit('disconnected');
+    });
 
-      this.log(`Recognition result: "${transcript}" (final: ${isFinal}, confidence: ${confidence})`);
+    this.connection.on(LiveTranscriptionEvents.Transcript, (data) => {
+      const transcript = data.channel.alternatives[0].transcript;
+      const isFinal = data.is_final;
+      const confidence = data.channel.alternatives[0].confidence;
 
-      if (isFinal) {
-        this.handleFinalResult(transcript, confidence);
-      } else {
-        this.handlePartialResult(transcript);
-      }
-    };
+      if (transcript && transcript.trim().length > 0) {
+        this.log(`Transcript: "${transcript}" (final: ${isFinal}, confidence: ${confidence})`);
 
-    this.recognition.onerror = (event) => {
-      this.log('Recognition error:', event.error);
-
-      if (event.error === 'not-allowed') {
-        this.hasPermission = false;
-        this.isListeningForWakeWord = false;
-        this.isTranscribing = false;
-
-        const error = new Error('Microphone permission denied. Please allow microphone access and try again.');
-        this.emit('error', error);
-        this.emit('permissionDenied');
-        return;
-      }
-
-      if (event.error === 'no-speech' || event.error === 'audio-capture' || event.error === 'aborted') {
-        if (!this.isStopping && (this.isListeningForWakeWord || this.isTranscribing)) {
-          this.log('Auto-restarting after error:', event.error);
-          setTimeout(() => {
-            if (!this.isStopping && (this.isListeningForWakeWord || this.isTranscribing)) {
-              try {
-                this.recognition.start();
-              } catch (e) {
-                this.log('Failed to restart:', e.message);
-              }
-            }
-          }, 1000);
+        if (isFinal) {
+          this.handleFinalResult(transcript, confidence);
+        } else {
+          this.handlePartialResult(transcript);
         }
       }
+    });
 
-      this.emit('error', { message: event.error, event });
-    };
+    this.connection.on(LiveTranscriptionEvents.Error, (error) => {
+      this.log('Deepgram error:', error);
+      this.emit('error', { message: 'Deepgram error', error });
+    });
 
-    this.recognition.onend = () => {
-      this.log('Recognition ended');
+    this.connection.on(LiveTranscriptionEvents.Warning, (warning) => {
+      this.log('Deepgram warning:', warning);
+    });
 
-      if (!this.isStopping && (this.isListeningForWakeWord || this.isTranscribing)) {
-        this.log('Auto-restarting recognition...');
-        setTimeout(() => {
-          if (!this.isStopping && (this.isListeningForWakeWord || this.isTranscribing)) {
-            try {
-              this.recognition.start();
-            } catch (e) {
-              if (!e.message.includes('already started')) {
-                this.log('Error restarting recognition:', e.message);
-                this.emit('error', { message: e.message });
-              }
-            }
-          }
-        }, 100);
-      }
-    };
-
-    this.recognition.onstart = () => {
-      this.log('Recognition started');
-    };
+    this.connection.on(LiveTranscriptionEvents.Metadata, (metadata) => {
+      this.log('Deepgram metadata:', metadata);
+    });
   }
 
   start() {
@@ -145,29 +109,34 @@ class WakeSleepSTT {
       throw new Error('Not initialized. Call initialize() first.');
     }
 
-    if (!this.hasPermission) {
-      const error = new Error('Microphone permission not granted. Please reinitialize to request permission.');
-      this.emit('error', error);
-      throw error;
-    }
-
-    this.log('Starting speech recognition...');
+    this.log('Starting microphone and speech recognition...');
 
     try {
       this.isStopping = false;
       this.isListeningForWakeWord = true;
-      this.recognition.start();
+
+      this.micStream = this.microphone.getAudioStream();
+
+      this.micStream.on('data', (data) => {
+        if (this.connection && this.connection.getReadyState() === 1) {
+          this.connection.send(data);
+        }
+      });
+
+      this.micStream.on('error', (error) => {
+        this.log('Microphone error:', error);
+        this.emit('error', { message: 'Microphone error', error });
+      });
+
+      this.microphone.start();
 
       this.log('Listening for wake word:', this.config.wakeWord);
       this.emit('started');
       this.emit('listeningForWakeWord', { wakeWord: this.config.wakeWord });
     } catch (error) {
-      if (error.message.includes('already started')) {
-        this.log('Recognition already running');
-      } else {
-        this.isListeningForWakeWord = false;
-        throw error;
-      }
+      this.isListeningForWakeWord = false;
+      this.log('Error starting:', error.message);
+      throw error;
     }
   }
 
@@ -243,11 +212,19 @@ class WakeSleepSTT {
     this.isListeningForWakeWord = false;
     this.isTranscribing = false;
 
-    if (this.recognition) {
+    if (this.microphone) {
       try {
-        this.recognition.stop();
+        this.microphone.stop();
       } catch (e) {
-        this.log('Error stopping recognition:', e.message);
+        this.log('Error stopping microphone:', e.message);
+      }
+    }
+
+    if (this.connection) {
+      try {
+        this.connection.finish();
+      } catch (e) {
+        this.log('Error closing Deepgram connection:', e.message);
       }
     }
 
@@ -261,7 +238,9 @@ class WakeSleepSTT {
 
   cleanup() {
     this.stop();
-    this.recognition = null;
+    this.connection = null;
+    this.microphone = null;
+    this.micStream = null;
     this.isInitialized = false;
     this.eventListeners = {};
     this.log('Resources cleaned up');
@@ -273,8 +252,7 @@ class WakeSleepSTT {
       isTranscribing: this.isTranscribing,
       wakeWord: this.config.wakeWord,
       sleepWord: this.config.sleepWord,
-      isInitialized: this.isInitialized,
-      hasPermission: this.hasPermission
+      isInitialized: this.isInitialized
     };
   }
 
@@ -304,10 +282,4 @@ class WakeSleepSTT {
   }
 }
 
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = WakeSleepSTT;
-}
-
-if (typeof window !== 'undefined') {
-  window.WakeSleepSTT = WakeSleepSTT;
-}
+export default WakeSleepSTT;

@@ -1,4 +1,4 @@
-# 🛠️ Setup Guide - Wake-Sleep STT Module
+# 🛠️ Setup Guide - Wake-Sleep STT Module (Deepgram)
 
 **Internship Coding Challenge - Complete Setup Instructions**
 
@@ -6,71 +6,123 @@
 
 ## 📋 Prerequisites
 
-**Minimal requirements - no installation needed!**
-
 ### Required:
-- ✅ **Modern web browser** (Chrome, Edge, or Safari)
+- ✅ **Node.js** v14.0.0 or higher ([Download](https://nodejs.org/))
+- ✅ **npm** (comes with Node.js)
 - ✅ **Working microphone**
-- ✅ **Internet connection** (for initial browser permissions)
-
-### NOT Required:
-- ❌ No Node.js installation
-- ❌ No npm packages
-- ❌ No model downloads
-- ❌ No build tools
-- ❌ No dependencies
-
-**Why?** This module uses the **Web Speech API** - a free, built-in browser feature that requires zero setup.
+- ✅ **Deepgram API key** (free $200 credit)
 
 ---
 
-## 🚀 Quick Start (3 Steps)
+## 🚀 Quick Start (5 Steps)
 
-### Step 1: Open the Project
+### Step 1: Get Deepgram API Key (FREE)
 
-Navigate to your project folder:
+1. **Sign up at Deepgram:**
+   - Visit: https://console.deepgram.com/signup
+   - Sign up with email or GitHub
+   - **Get FREE $200 credit** (no credit card required!)
+
+2. **Get your API key:**
+   - Go to: https://console.deepgram.com/project/default/keys
+   - Click "Create a New API Key"
+   - Name it: "Wake-Sleep-STT-Module"
+   - Copy the API key (starts with `...`)
+
+---
+
+### Step 2: Install Dependencies
+
+Navigate to project folder and install:
+
 ```bash
 cd C:\Users\dell\Desktop\wake-sleep-stt-module
+npm install
 ```
 
-Or simply locate the folder on your desktop.
+**This will install:**
+- `@deepgram/sdk` - Deepgram Node.js SDK
+- `mic` - Microphone capture library
+
+**Expected output:**
+```
+added 50 packages in 15s
+```
 
 ---
 
-### Step 2: Open Demo in Browser
+### Step 3: Set API Key
 
-**Option A: Double-click**
-- Double-click `demo/index.html`
-- It will open in your default browser
-
-**Option B: Command line**
+**Option A: Environment Variable (Recommended)**
 
 **Windows:**
 ```bash
-start demo/index.html
+set DEEPGRAM_API_KEY=your_api_key_here
 ```
 
-**macOS:**
+**Mac/Linux:**
 ```bash
-open demo/index.html
+export DEEPGRAM_API_KEY=your_api_key_here
 ```
 
-**Linux:**
+**Option B: .env File**
+
+1. Create `.env` file in project root:
 ```bash
-xdg-open demo/index.html
+copy .env.example .env
+```
+
+2. Edit `.env` and add your key:
+```
+DEEPGRAM_API_KEY=your_api_key_here
 ```
 
 ---
 
-### Step 3: Allow Microphone Permission
+### Step 4: Test Microphone Permissions
 
-When you click the "Start" button:
+**Windows:**
+1. Settings → Privacy → Microphone
+2. Enable "Allow apps to access your microphone"
 
-1. Browser will show permission prompt: **"Allow microphone access?"**
-2. Click **"Allow"** or **"Yes"**
-3. Module is now ready!
+**macOS:**
+1. System Preferences → Security & Privacy → Microphone
+2. Check Terminal or your IDE
 
-**That's it! No installation, no setup, no configuration.**
+**Linux:**
+```bash
+arecord -l
+```
+
+---
+
+### Step 5: Run Demo
+
+```bash
+npm run demo
+```
+
+**Expected output:**
+```
+╔════════════════════════════════════════════════════════════╗
+║    Wake-Sleep STT Module - Deepgram Integration Demo      ║
+╚════════════════════════════════════════════════════════════╝
+
+📋 Instructions:
+   1. Say "Hi" to activate transcription
+   2. Speak anything - it will be transcribed in real-time
+   3. Say "Bye" to stop transcription
+   4. Repeat as needed - the cycle continues!
+   5. Press Ctrl+C to exit
+
+⏳ Initializing Deepgram connection...
+
+✓ Deepgram initialized successfully!
+✓ Connected to Deepgram
+✓ Microphone started
+
+👂 Listening for wake word: "hi"...
+```
 
 ---
 
@@ -78,187 +130,130 @@ When you click the "Start" button:
 
 ### Using the Demo:
 
-1. **Click "🎤 Start" button**
-   - Status changes to "⏳ Requesting microphone permission..."
-   - Browser prompts for microphone access
-   - After allowing: "✅ Ready to start"
+1. **Run the demo:** `npm run demo`
 
-2. **Say "Hi"** (the wake word)
-   - Status changes to "🎤 TRANSCRIPTION ACTIVE"
-   - Module starts transcribing everything you say
+2. **Say "Hi"** clearly
+   - You'll see: `🎤 WAKE WORD DETECTED! Transcription ACTIVE`
 
-3. **Speak anything**
-   - Real-time transcription appears in "Partial (Real-time)" section
-   - Final transcription appears in "Transcriptions" box with timestamp
+3. **Speak anything:**
+   - "Hello world, this is a test of real-time transcription"
+   - Partial results appear in real-time
+   - Final transcription shows with timestamp and confidence score
 
-4. **Say "Bye"** (the sleep word)
-   - Status changes to "👂 Listening for wake word: 'Hi'..."
-   - Transcription pauses
+4. **Say "Bye"**
+   - You'll see: `💤 SLEEP WORD DETECTED! Transcription STOPPED`
 
-5. **Repeat the cycle** as many times as you want!
+5. **Repeat** as many times as you want!
 
----
-
-## 🎯 Browser Compatibility
-
-### ✅ Fully Supported:
-- **Google Chrome** (Windows, macOS, Linux)
-- **Microsoft Edge** (Windows, macOS)
-- **Safari** (macOS, iOS)
-- **Chromium-based browsers** (Brave, Opera, Vivaldi)
-
-### ❌ Not Supported:
-- Firefox (no Web Speech API support)
-- Internet Explorer
-- Older browser versions
-
-**Recommended:** Chrome or Edge for best results.
+6. **Exit:** Press `Ctrl+C`
 
 ---
 
 ## 🔧 Troubleshooting
 
-### Issue: "Microphone permission denied"
-
-**Symptoms:**
-- Red warning message appears
-- Status shows "❌ Permission Required"
-
-**Solutions:**
-
-**Chrome/Edge:**
-1. Click the 🔒 lock icon in address bar
-2. Find "Microphone" setting
-3. Change to "Allow"
-4. Refresh page and click "Start" again
-
-**Manual reset:**
-- Chrome: `chrome://settings/content/microphone`
-- Edge: `edge://settings/content/microphone`
-- Safari: System Preferences → Security & Privacy → Microphone
-
----
-
-### Issue: "Web Speech API not supported"
-
-**Symptoms:**
-- Yellow warning box appears
-- Error message about browser compatibility
+### Issue: "DEEPGRAM_API_KEY environment variable not set"
 
 **Solution:**
-- Switch to Chrome, Edge, or Safari
-- Update your browser to the latest version
+Set the environment variable:
+
+**Windows CMD:**
+```bash
+set DEEPGRAM_API_KEY=your_key_here
+npm run demo
+```
+
+**Windows PowerShell:**
+```powershell
+$env:DEEPGRAM_API_KEY="your_key_here"
+npm run demo
+```
+
+**Mac/Linux:**
+```bash
+export DEEPGRAM_API_KEY=your_key_here
+npm run demo
+```
+
+**Or create .env file** (see Step 3)
 
 ---
 
-### Issue: Wake word "Hi" not detecting
+### Issue: "npm install" fails
 
-**Possible causes:**
-- Speaking too quietly
-- Background noise
-- Microphone quality
-- Pronunciation
+**Windows:**
+```bash
+npm install --global windows-build-tools
+npm install
+```
+
+**Mac:**
+```bash
+brew install sox
+npm install
+```
+
+**Linux:**
+```bash
+sudo apt-get install libasound2-dev sox
+npm install
+```
+
+---
+
+### Issue: "Microphone not found"
+
+**Check microphone:**
+```bash
+# List audio devices
+node -e "console.log(require('mic').getDevices())"
+```
+
+**Test microphone:**
+- Windows: Sound settings → Input → Test microphone
+- Mac: System Preferences → Sound → Input
+- Linux: `arecord -d 5 test.wav && aplay test.wav`
+
+---
+
+### Issue: Wake word not detecting
 
 **Solutions:**
 
 1. **Speak clearly and louder**
-   - Say "Hi" distinctly
-   - Position microphone closer (5-10 inches from mouth)
+   - Position mic 5-10 inches from mouth
+   - Speak distinctly: "Hi"
 
 2. **Reduce background noise**
    - Close windows
    - Turn off fans/AC
-   - Mute other applications
 
-3. **Test microphone**
-   - Go to browser settings → Microphone
-   - Test recording to verify microphone works
+3. **Check debug logs**
+   - Look for `[WakeSleepSTT]` messages in console
+   - Verify transcripts are being received
 
-4. **Check microphone input level**
-   - Windows: Settings → Sound → Input devices
-   - macOS: System Preferences → Sound → Input
-
-5. **Try different wake word**
-   - Edit `demo/index.html` line 306
-   - Change `wakeWord: 'hi'` to `wakeWord: 'hello'`
-   - Refresh browser
+4. **Try different wake word:**
+   Edit `demo/demo.js` line 39:
+   ```javascript
+   wakeWord: 'hello',  // Try 'hello' instead of 'hi'
+   ```
 
 ---
 
-### Issue: Transcription accuracy is low
+### Issue: Low transcription accuracy
 
 **Solutions:**
 
-1. **Improve microphone quality**
-   - Use external microphone (not laptop built-in)
-   - Use headset with boom mic
-   - Position microphone correctly
+1. **Use better microphone**
+   - External USB microphone
+   - Headset with boom mic
 
 2. **Speak clearly**
-   - Pronounce words distinctly
-   - Moderate speaking pace
-   - Avoid mumbling
+   - Moderate pace
+   - Clear pronunciation
 
-3. **Reduce background noise**
-   - Record in quiet room
-   - Close windows and doors
-   - Turn off noisy appliances
-
-4. **Check microphone settings**
-   - Increase input volume
-   - Disable automatic gain control
-   - Test in other apps (Zoom, Discord)
-
----
-
-### Issue: "Not Started" status stuck
-
-**Symptoms:**
-- Click "Start" but nothing happens
-- No permission prompt appears
-
-**Solutions:**
-
-1. **Check browser console for errors**
-   - Press F12 to open DevTools
-   - Go to "Console" tab
-   - Look for error messages
-
-2. **Clear browser cache**
-   - Chrome/Edge: Ctrl+Shift+Delete
-   - Select "Cached images and files"
-   - Clear data
-
-3. **Try different browser**
-   - Switch to Chrome or Edge
-   - Ensure latest version installed
-
-4. **Refresh page**
-   - Press Ctrl+R or F5
-   - Hard refresh: Ctrl+Shift+R
-
----
-
-### Issue: Transcription stops unexpectedly
-
-**Possible causes:**
-- Browser automatically stops after silence
-- Microphone disconnected
-- Permission revoked
-
-**Solutions:**
-
-1. **Check microphone connection**
-   - Verify USB/Bluetooth connection
-   - Test in other apps
-
-2. **Keep speaking**
-   - Web Speech API may pause after long silence
-   - Say something to restart
-
-3. **Restart module**
-   - Click "⏹️ Stop" button
-   - Click "🎤 Start" button again
+3. **Deepgram already uses best model**
+   - Nova-2 model is highly accurate
+   - Real-time optimized
 
 ---
 
@@ -266,7 +261,7 @@ When you click the "Start" button:
 
 ### Recording Requirements:
 - **Duration:** 2 minutes
-- **Content:** Live demo + brief code explanation
+- **Content:** Live demo + code explanation
 - **Format:** MP4, MOV, or AVI
 
 ### Recommended Tools:
@@ -274,58 +269,60 @@ When you click the "Start" button:
 - **macOS:** QuickTime Player, OBS Studio
 - **Linux:** OBS Studio, SimpleScreenRecorder
 
-### Video Script:
+### Video Script (2 minutes):
 
 **Part 1: Introduction (15 seconds)**
 ```
-"Hello! This is my Wake-Sleep STT Module for the internship challenge.
-It enables real-time speech-to-text with wake and sleep word toggling."
+"Hello! This is my Wake-Sleep STT Module using Deepgram API
+for Mukunda's internship challenge. It enables real-time
+speech-to-text with wake and sleep word toggling."
 ```
 
-**Part 2: Live Demo (60 seconds)**
+**Part 2: Live Demo (75 seconds)**
 ```
-1. Show opening demo/index.html in browser
-2. Click "Start" button
-3. Allow microphone permission
-4. Say "Hi" → Show status changing to "TRANSCRIPTION ACTIVE"
-5. Speak 2-3 sentences → Show real-time transcription appearing
-6. Say "Bye" → Show status returning to "Listening for wake word"
-7. Repeat cycle once more to demonstrate repeatability
+1. Show terminal
+2. Run: npm run demo
+3. Say "Hi" → Show wake word detection
+4. Speak 2-3 sentences → Show real-time transcription
+5. Say "Bye" → Show sleep word detection
+6. Repeat cycle once more
+7. Show confidence scores
 ```
 
-**Part 3: Code Walkthrough (45 seconds)**
+**Part 3: Code Walkthrough (30 seconds)**
 ```
-1. Open src/WakeSleepSTT.js in editor
-2. Highlight:
-   - Event-driven architecture (line 281-286)
-   - Wake word detection (line 178-180)
-   - Sleep word detection (line 182-184)
-   - Repeatable cycle (line 236)
-3. Mention: "Uses Web Speech API - free, no installation required"
+1. Open src/WakeSleepSTT.js
+2. Show Deepgram integration (line 35)
+3. Show wake word detection (line 147)
+4. Show sleep word detection (line 151)
+5. Show repeatable cycle (line 205)
+6. Mention: "Uses Deepgram's Nova-2 model with real-time streaming"
 ```
 
 ---
 
 ## 📝 Integration Guide
 
-### Using the Module in Your Project:
+### Using in Your Project:
 
-**Step 1: Copy the module file**
+**Step 1: Install**
+```bash
+npm install @deepgram/sdk mic
+```
+
+**Step 2: Copy module**
 ```bash
 cp src/WakeSleepSTT.js your-project/
 ```
 
-**Step 2: Include in your HTML**
-```html
-<script src="WakeSleepSTT.js"></script>
-```
-
-**Step 3: Initialize and use**
+**Step 3: Use it**
 ```javascript
+import WakeSleepSTT from './WakeSleepSTT.js';
+
 const stt = new WakeSleepSTT({
   wakeWord: 'hi',
   sleepWord: 'bye',
-  language: 'en-US',
+  apiKey: process.env.DEEPGRAM_API_KEY,
   debug: true
 });
 
@@ -338,116 +335,93 @@ await stt.initialize();
 stt.start();
 ```
 
-### React Native Integration:
-
-The module is designed to be React Native compatible. For mobile implementation:
-
-1. **Create native bridge** for microphone access
-2. **Implement speech recognition** using:
-   - iOS: `Speech` framework
-   - Android: `SpeechRecognizer` API
-3. **Use same event-driven API** from WakeSleepSTT.js
-4. **See DOCUMENTATION.md** for detailed integration guide
-
 ---
 
 ## 🔍 Verification Checklist
 
-Before submitting your challenge:
+Before submitting:
 
-- [ ] Demo opens in browser without errors
-- [ ] Microphone permission prompt appears
-- [ ] After allowing permission, module starts
+- [ ] Node.js installed (v14+)
+- [ ] npm install completed
+- [ ] Deepgram API key obtained (free $200 credit)
+- [ ] API key set as environment variable
+- [ ] npm run demo works
 - [ ] Saying "Hi" activates transcription
-- [ ] Real-time transcription appears while speaking
+- [ ] Real-time transcription appears
 - [ ] Saying "Bye" stops transcription
-- [ ] Can repeat wake/sleep cycle multiple times
-- [ ] Transcriptions show with timestamps and confidence
-- [ ] Works in Chrome or Edge
+- [ ] Can repeat cycle multiple times
+- [ ] Transcriptions show timestamp and confidence
 - [ ] 2-minute demo video recorded
+
+---
+
+## 💡 Why Deepgram?
+
+| Feature | Deepgram | Web Speech API | Whisper |
+|---------|----------|----------------|---------|
+| **Accuracy** | Excellent | Good | Excellent |
+| **Speed** | Real-time | Real-time | Batch only |
+| **Free Tier** | $200 credit | Free | Free |
+| **Setup** | npm install | Browser only | Model download |
+| **Cross-platform** | Yes | Browser only | Yes |
+| **Professional** | ✅ Production | ❌ Consumer | ⚠️ Research |
+
+**Deepgram is the professional choice for this challenge!**
 
 ---
 
 ## 🎯 Challenge Submission Ready
 
-Your module is ready for submission when:
+Your module is ready when:
 
-1. ✅ **Demo works flawlessly** in browser
-2. ✅ **Wake word ("Hi") activates** transcription
-3. ✅ **Sleep word ("Bye") deactivates** transcription
-4. ✅ **Real-time transcripts visible** in UI
-5. ✅ **Repeatable cycle works** infinitely
-6. ✅ **Code is modular** and reusable
-7. ✅ **Video demo recorded** (2 minutes)
-8. ✅ **GitHub repo pushed** with all code
-
----
-
-## 💡 Key Advantages
-
-**Why Web Speech API?**
-
-| Feature | Web Speech API | Vosk (Alternative) |
-|---------|----------------|-------------------|
-| **Cost** | 100% Free | Free |
-| **Setup** | Zero installation | Requires npm, models |
-| **Size** | 0 bytes | ~50MB minimum |
-| **Speed** | Real-time | Real-time |
-| **Accuracy** | Excellent | Good |
-| **Platform** | Browser | Node.js only |
-| **Maintenance** | None | Model updates |
-
-**Your implementation is actually superior for this challenge!**
+1. ✅ Demo works with Deepgram
+2. ✅ Wake word ("Hi") activates transcription
+3. ✅ Sleep word ("Bye") deactivates transcription
+4. ✅ Real-time transcripts visible in terminal
+5. ✅ Repeatable cycle works infinitely
+6. ✅ Code is modular and reusable
+7. ✅ Video demo recorded (2 minutes)
+8. ✅ GitHub repo updated
 
 ---
 
-## 📞 Need Help?
+## 📊 Deepgram Free Tier
 
-### Quick Debugging:
+**What you get FREE:**
+- ✅ $200 credit (enough for ~7 hours of audio)
+- ✅ Nova-2 model (best accuracy)
+- ✅ Real-time streaming
+- ✅ No credit card required
+- ✅ Perfect for this challenge
 
-**Enable debug mode:**
-Edit `demo/index.html` line 308 to see detailed logs:
-```javascript
-debug: true  // Already enabled in your demo
-```
-
-**Check browser console:**
-- Press `F12`
-- Go to "Console" tab
-- Look for `[WakeSleepSTT]` messages
-
-**Common patterns:**
-- ✅ `Microphone permission granted` = Working
-- ❌ `Permission denied` = Check browser settings
-- ⚠️ `Recognition error: no-speech` = Speak louder
+**Sign up:** https://console.deepgram.com/signup
 
 ---
 
 ## 🏆 Success Tips
 
 **For best demo:**
-1. Use quality microphone (USB or headset)
-2. Record in quiet room
-3. Speak clearly and naturally
+1. Quality microphone (USB or headset)
+2. Quiet environment
+3. Clear speech
 4. Show multiple wake/sleep cycles
-5. Demonstrate real-time transcription
-6. Show confidence scores in UI
-7. Explain code architecture briefly
+5. Show confidence scores
+6. Explain Deepgram integration
+7. Mention $200 free credit
 
 ---
 
 ## 📚 Additional Resources
 
+- Deepgram Docs: https://developers.deepgram.com/
+- Deepgram Console: https://console.deepgram.com/
 - `README.md` - Project overview
 - `DOCUMENTATION.md` - Technical details
-- `CHALLENGE_COMPLIANCE.md` - Requirements checklist
-- `demo/index.html` - Live working example
-- `src/WakeSleepSTT.js` - Core module code
+- `demo/demo.js` - Working example
 
 ---
 
-**Setup complete! Your module is ready for challenge submission! 🚀**
+**Setup complete! Your Deepgram-powered module is ready! 🚀**
 
-**Total setup time: < 1 minute**
-**Total dependencies: 0**
-**Total cost: $0**
+**Total setup time: ~5 minutes**
+**Total cost: $0 (free $200 credit)**

@@ -1,8 +1,8 @@
 # Dependencies
 node_modules/
 
-# Vosk models (large files)
-models/
+# Lock files
+package-lock.json
 
 # Environment variables
 .env

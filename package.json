@@ -1,12 +1,12 @@
 {
   "name": "wake-sleep-stt-module",
   "version": "1.0.0",
-  "description": "A modular speech-to-text system with wake/sleep word detection",
+  "description": "A modular speech-to-text system with wake/sleep word detection using Deepgram",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "demo": "echo 'Open demo/index.html in your browser to run the demo'",
-    "test": "echo 'Open demo/index.html in your browser to test'"
+    "demo": "node demo/demo.js",
+    "test": "node demo/demo.js"
   },
   "keywords": [
     "speech-to-text",
@@ -18,8 +18,10 @@
   ],
   "author": "",
   "license": "MIT",
-  "dependencies": {},
-  "devDependencies": {},
+  "dependencies": {
+    "@deepgram/sdk": "^3.4.0",
+    "mic": "^2.1.2"
+  },
   "engines": {
     "node": ">=14.0.0"
   }
