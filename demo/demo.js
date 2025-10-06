@@ -1,4 +1,7 @@
 import WakeSleepSTT from '../src/WakeSleepSTT.js';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const colors = {
   reset: '\x1b[0m',

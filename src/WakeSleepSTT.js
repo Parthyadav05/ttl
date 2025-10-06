@@ -1,5 +1,5 @@
 import { createClient, LiveTranscriptionEvents } from '@deepgram/sdk';
-import mic from 'mic';
+import recorder from 'node-record-lpcm16';
 
 class WakeSleepSTT {
   constructor(options = {}) {
@@ -43,13 +43,6 @@ class WakeSleepSTT {
       });
 
       this.setupDeepgramHandlers();
-
-      this.microphone = mic({
-        rate: this.config.sampleRate,
-        channels: this.config.channels,
-        debug: false,
-        exitOnSilence: 0,
-      });
 
       this.isInitialized = true;
       this.log('Deepgram connection initialized successfully');
@@ -115,7 +108,14 @@ class WakeSleepSTT {
       this.isStopping = false;
       this.isListeningForWakeWord = true;
 
-      this.micStream = this.microphone.getAudioStream();
+      this.micStream = recorder.record({
+        sampleRate: this.config.sampleRate,
+        channels: this.config.channels,
+        threshold: 0,
+        verbose: false,
+        recordProgram: 'sox',
+        silence: '0',
+      }).stream();
 
       this.micStream.on('data', (data) => {
         if (this.connection && this.connection.getReadyState() === 1) {
@@ -127,8 +127,6 @@ class WakeSleepSTT {
         this.log('Microphone error:', error);
         this.emit('error', { message: 'Microphone error', error });
       });
-
-      this.microphone.start();
 
       this.log('Listening for wake word:', this.config.wakeWord);
       this.emit('started');
@@ -212,9 +210,10 @@ class WakeSleepSTT {
     this.isListeningForWakeWord = false;
     this.isTranscribing = false;
 
-    if (this.microphone) {
+    if (this.micStream) {
       try {
-        this.microphone.stop();
+        recorder.stop();
+        this.micStream.end();
       } catch (e) {
         this.log('Error stopping microphone:', e.message);
       }
