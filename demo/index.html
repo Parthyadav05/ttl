@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wake-Sleep STT Module - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #1a1a1a;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .status-card {
+            background: #fafafa;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 4px solid #333;
+        }
+
+        .status-label {
+            font-weight: bold;
+            color: #1a1a1a;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .status-text {
+            font-size: 1.3em;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .status-text.active {
+            color: #1a1a1a;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border: 2px solid #333;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            background: white;
+            color: #333;
+        }
+
+        button:hover {
+            background: #333;
+            color: white;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        #startBtn {
+            background: #1a1a1a;
+            color: white;
+            border: 2px solid #1a1a1a;
+        }
+
+        #stopBtn {
+            background: white;
+            color: #333;
+        }
+
+        #startBtn:disabled, #stopBtn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .transcription-box {
+            background: #fafafa;
+            border-radius: 8px;
+            padding: 25px;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .transcription-item {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 3px solid #333;
+            border: 1px solid #e0e0e0;
+        }
+
+        .transcription-item .timestamp {
+            font-size: 0.85em;
+            color: #999;
+            margin-bottom: 5px;
+        }
+
+        .transcription-item .text {
+            font-size: 1.1em;
+            color: #1a1a1a;
+        }
+
+        .partial-text {
+            color: #999;
+            font-style: italic;
+            padding: 10px;
+            min-height: 30px;
+        }
+
+        .instructions {
+            background: #fafafa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .instructions h3 {
+            color: #1a1a1a;
+            margin-bottom: 10px;
+        }
+
+        .instructions ol {
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+            color: #666;
+        }
+
+        .info-badge {
+            display: inline-block;
+            background: #333;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .wake-word { background: #1a1a1a; }
+        .sleep-word { background: #666; }
+
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .alert-info {
+            background: #fafafa;
+            border: 1px solid #ddd;
+            color: #333;
+        }
+
+        .alert-warning {
+            background: #fafafa;
+            border: 1px solid #ddd;
+            color: #666;
+        }
+
+        .alert-danger {
+            background: #f5f5f5;
+            border: 1px solid #999;
+            color: #333;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎙️ Wake-Sleep STT Module</h1>
+        <p class="subtitle">Real-time Speech-to-Text with Wake/Sleep Word Detection</p>
+
+        <div class="instructions">
+            <h3>📋 How to Use:</h3>
+            <ol>
+                <li>Click <strong>"Start"</strong> to begin</li>
+                <li>Say <span class="info-badge wake-word">"Hi"</span> to activate transcription</li>
+                <li>Speak anything - watch real-time transcription</li>
+                <li>Say <span class="info-badge sleep-word">"Bye"</span> to stop transcription</li>
+                <li>Repeat the cycle as many times as you want!</li>
+            </ol>
+        </div>
+
+        <div id="browserWarning" class="alert alert-warning" style="display: none;">
+            ⚠️ For best results, use <strong>Google Chrome</strong>, <strong>Microsoft Edge</strong>, or <strong>Safari</strong>.
+        </div>
+
+        <div id="permissionWarning" class="alert alert-danger" style="display: none;">
+            ⚠️ <strong>Microphone Permission Denied</strong><br>
+            Please allow microphone access in your browser settings and refresh the page.
+        </div>
+
+        <div class="status-card">
+            <div class="status-label">Current Status</div>
+            <div id="status" class="status-text">Not Started</div>
+        </div>
+
+        <div class="controls">
+            <button id="startBtn" onclick="startSTT()">🎤 Start</button>
+            <button id="stopBtn" onclick="stopSTT()" disabled>⏹️ Stop</button>
+        </div>
+
+        <div class="status-card">
+            <div class="status-label">Partial (Real-time)</div>
+            <div id="partialText" class="partial-text">Partial transcription will appear here...</div>
+        </div>
+
+        <div class="status-card">
+            <div class="status-label">Transcriptions</div>
+            <div id="transcriptions" class="transcription-box">
+                <p style="color: #999; text-align: center;">Transcriptions will appear here...</p>
+            </div>
+        </div>
+
+        <div class="info-badge">Wake Word: "Hi"</div>
+        <div class="info-badge">Sleep Word: "Bye"</div>
+    </div>
+
+    <script src="../src/WakeSleepSTT.js"></script>
+    <script>
+        let stt = null;
+
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            document.getElementById('browserWarning').style.display = 'block';
+        }
+
+        async function startSTT() {
+            try {
+                document.getElementById('permissionWarning').style.display = 'none';
+                document.getElementById('startBtn').disabled = true;
+                updateStatus('⏳ Requesting microphone permission...');
+
+                stt = new WakeSleepSTT({
+                    wakeWord: 'hi',
+                    sleepWord: 'bye',
+                    debug: true,
+                    language: 'en-US',
+                    continuous: true,
+                    interimResults: true
+                });
+
+                stt.on('permissionGranted', () => {
+                    console.log('✅ Microphone permission granted');
+                    document.getElementById('permissionWarning').style.display = 'none';
+                    updateStatus('⏳ Initializing...');
+                });
+
+                stt.on('permissionDenied', () => {
+                    console.error('❌ Microphone permission denied');
+                    document.getElementById('permissionWarning').style.display = 'block';
+                    document.getElementById('startBtn').disabled = false;
+                    document.getElementById('stopBtn').disabled = true;
+                    updateStatus('❌ Permission Denied');
+                });
+
+                stt.on('initialized', () => {
+                    console.log('✅ Initialized');
+                    updateStatus('✅ Ready to start');
+                });
+
+                stt.on('started', () => {
+                    updateStatus('👂 Listening for wake word: "Hi"...');
+                    document.getElementById('startBtn').disabled = true;
+                    document.getElementById('stopBtn').disabled = false;
+                });
+
+                stt.on('listeningForWakeWord', (data) => {
+                    updateStatus(`👂 Listening for wake word: "${data.wakeWord}"...`);
+                });
+
+                stt.on('wakeWordDetected', (data) => {
+                    updateStatus('🎤 TRANSCRIPTION ACTIVE - Speak now!', true);
+                    addNotification('Wake word detected! Start speaking...', 'success');
+                });
+
+                stt.on('transcriptionStarted', () => {
+                    console.log('📝 Transcription started');
+                });
+
+                stt.on('partialTranscription', (data) => {
+                    document.getElementById('partialText').innerHTML =
+                        `<strong>🔊 ${data.text}</strong>`;
+                });
+
+                stt.on('transcription', (data) => {
+                    addTranscription(data.text, data.timestamp, data.confidence);
+                    document.getElementById('partialText').innerHTML =
+                        'Partial transcription will appear here...';
+                });
+
+                stt.on('sleepWordDetected', (data) => {
+                    updateStatus('👂 Listening for wake word: "Hi"...');
+                    addNotification('Sleep word detected! Transcription paused.', 'info');
+                    document.getElementById('partialText').innerHTML =
+                        'Partial transcription will appear here...';
+                });
+
+                stt.on('stopped', () => {
+                    updateStatus('⏹️ Stopped');
+                    document.getElementById('startBtn').disabled = false;
+                    document.getElementById('stopBtn').disabled = true;
+                });
+
+                stt.on('error', (error) => {
+                    console.error('❌ Error:', error);
+
+                    const errorMsg = error.message || error;
+
+                    if (errorMsg.includes('permission') || errorMsg.includes('not-allowed')) {
+                        document.getElementById('permissionWarning').style.display = 'block';
+                        updateStatus('❌ Permission Required');
+                    } else if (errorMsg !== 'no-speech' && errorMsg !== 'aborted') {
+                        addNotification(`Error: ${errorMsg}`, 'error');
+                    }
+                });
+
+                await stt.initialize();
+                stt.start();
+
+            } catch (error) {
+                console.error('Failed to start:', error);
+
+                if (error.message.includes('permission') || error.message.includes('not-allowed')) {
+                    document.getElementById('permissionWarning').style.display = 'block';
+                    updateStatus('❌ Permission Required');
+                } else {
+                    addNotification('Error: ' + error.message, 'error');
+                    updateStatus('❌ Error: ' + error.message);
+                }
+
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+            }
+        }
+
+        function stopSTT() {
+            if (stt) {
+                stt.stop();
+            }
+        }
+
+        function updateStatus(text, isActive = false) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = text;
+            if (isActive) {
+                statusEl.classList.add('active');
+            } else {
+                statusEl.classList.remove('active');
+            }
+        }
+
+        function addTranscription(text, timestamp, confidence) {
+            const transcriptionsEl = document.getElementById('transcriptions');
+
+            if (transcriptionsEl.innerHTML.includes('Transcriptions will appear here')) {
+                transcriptionsEl.innerHTML = '';
+            }
+
+            const time = new Date(timestamp).toLocaleTimeString();
+            const confidencePercent = confidence ? Math.round(confidence * 100) : 0;
+
+            const item = document.createElement('div');
+            item.className = 'transcription-item';
+            item.innerHTML = `
+                <div class="timestamp">${time} | Confidence: ${confidencePercent}%</div>
+                <div class="text">${text}</div>
+            `;
+
+            transcriptionsEl.insertBefore(item, transcriptionsEl.firstChild);
+        }
+
+        function addNotification(text, type) {
+            const transcriptionsEl = document.getElementById('transcriptions');
+
+            const bgColors = {
+                success: '#fafafa',
+                info: '#fafafa',
+                error: '#f5f5f5'
+            };
+
+            const item = document.createElement('div');
+            item.style.background = bgColors[type] || bgColors.info;
+            item.style.padding = '15px';
+            item.style.borderRadius = '10px';
+            item.style.marginBottom = '10px';
+            item.style.fontWeight = 'bold';
+            item.style.border = '1px solid #ddd';
+            item.style.color = '#333';
+            item.textContent = text;
+
+            transcriptionsEl.insertBefore(item, transcriptionsEl.firstChild);
+
+            setTimeout(() => {
+                item.remove();
+            }, 3000);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 's' && e.ctrlKey) {
+                e.preventDefault();
+                startSTT();
+            } else if (e.key === 'Escape') {
+                stopSTT();
+            }
+        });
+    </script>
+</body>
+</html>
